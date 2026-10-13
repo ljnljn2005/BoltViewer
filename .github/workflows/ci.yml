@@ -1,0 +1,42 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: go test ./...
+      - run: go vet ./...
+      - run: node tools/frontend-test.cjs
+      - name: Build Windows
+        if: runner.os == 'Windows'
+        run: go build -trimpath -ldflags="-s -w" -o boltdbviewer.exe .
+      - name: Build Linux or macOS
+        if: runner.os != 'Windows'
+        run: go build -trimpath -ldflags="-s -w" -o boltdbviewer .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BoltViewer-${{ runner.os }}
+          path: |
+            boltdbviewer.exe
+            boltdbviewer
+            README.md

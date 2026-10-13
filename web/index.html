@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>BoltDB Viewer · 本地数据库查看器</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232d4439'/%3E%3Cpath d='M18 5 9 18h7l-2 9 10-14h-8z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true"><defs>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 5a2 2 0 0 1 2-2h5l3 3h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3" fill="currentColor"/><path d="M4 8c4 3 12 3 16 0v4c-4 3-12 3-16 0zm0 7c4 3 12 3 16 0v4c0 4-16 4-16 0z" fill="currentColor"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 16 5 5" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0-1 7M20 3v7h-7" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 8h12v13H8zM16 8V3H3v13h5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  </defs></svg>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="BoltDB Viewer 首页"><span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2 5 14h7l-2 8L20 9h-8z" fill="currentColor"/></svg></span><strong>BoltDB<span>Viewer</span></strong></a>
+    <div class="current-file"><span class="separator">/</span><svg class="icon"><use href="#i-db"/></svg><span id="file-name">未打开数据库</span><span class="badge readonly">只读</span></div>
+    <div class="header-actions"><button id="refresh" class="button quiet" title="刷新数据库"><svg class="icon"><use href="#i-refresh"/></svg><span>刷新</span></button><button id="open-db" class="button primary"><svg class="icon"><use href="#i-folder"/></svg>打开数据库</button></div>
+  </header>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Bucket 导航">
+      <div class="sidebar-heading"><span class="eyebrow">数据库结构</span><span id="root-count" class="count">0</span></div>
+      <div id="tree" class="tree" aria-label="Bucket 列表"><p class="sidebar-empty">打开数据库后，bucket 会显示在这里。</p></div>
+      <div class="sidebar-info"><span class="eyebrow">文件信息</span><dl><div><dt>文件大小</dt><dd id="db-size">—</dd></div><div><dt>页面大小</dt><dd id="page-size">—</dd></div><div><dt>访问模式</dt><dd class="safe-text">只读</dd></div></dl><p id="db-path" class="file-path" title="">本地运行 · 数据留在你的电脑</p></div>
+    </aside>
+    <main class="workspace">
+      <section class="browser-pane" aria-label="键值浏览器">
+        <div class="pane-heading"><div><div id="breadcrumbs" class="breadcrumbs">DATABASE EXPLORER</div><h1 id="bucket-title">浏览你的数据</h1><p id="bucket-description">选择一个 bucket，查看其中的键值。</p></div><button id="export" class="button outline" disabled><svg class="icon"><use href="#i-download"/></svg>导出 bucket</button></div>
+        <div class="stats"><div><span>键值记录</span><strong id="value-count">—</strong></div><div><span>子 bucket</span><strong id="child-count">—</strong></div><div><span>Sequence</span><strong id="sequence">—</strong></div></div>
+        <div class="list-toolbar"><label class="searchbox"><svg class="icon"><use href="#i-search"/></svg><input id="search" placeholder="搜索键名或十六进制…" autocomplete="off" disabled><kbd>Ctrl K</kbd></label><span id="match-count" class="muted">0 条记录</span></div>
+        <div id="list-error" class="inline-error" role="alert" hidden></div>
+        <div class="table-scroll"><table aria-label="键值记录"><thead><tr><th class="key-column">键 / KEY</th><th>类型</th><th class="size-column">大小</th></tr></thead><tbody id="entries"></tbody></table><div id="list-empty" class="empty-state"><div class="empty-symbol"><svg class="icon"><use href="#i-db"/></svg></div><h2>从一个 bucket 开始</h2><p>左侧是数据库结构，右侧是选中记录的内容。</p></div></div>
+        <div class="pagination"><span id="page-label">尚未选择 bucket</span><div><button id="prev-page" class="button icon-button" aria-label="上一页" disabled><svg class="icon rotate"><use href="#i-chevron"/></svg></button><button id="next-page" class="button icon-button" aria-label="下一页" disabled><svg class="icon"><use href="#i-chevron"/></svg></button></div></div>
+      </section>
+      <section class="detail-pane" aria-label="值详情"><div class="detail-heading"><span class="eyebrow">记录详情</span><span id="value-format" class="badge" hidden></span></div><div id="detail-empty" class="detail-empty"><span class="code-symbol">{ }</span><h2>看看里面有什么</h2><p>选择一条记录，查看文本、JSON<br>或原始字节。</p></div><div id="detail" hidden><div class="key-detail"><span class="field-label">KEY</span><div><code id="selected-key"></code><button id="copy-key" class="button icon-button" title="复制键名" aria-label="复制键名"><svg class="icon"><use href="#i-copy"/></svg></button></div><span id="key-size" class="muted"></span></div><div class="value-meta"><span class="field-label">VALUE</span><span id="value-size"></span></div><div class="tabs" role="tablist" aria-label="值显示格式"><button data-tab="text" role="tab">文本</button><button data-tab="json" role="tab">JSON</button><button data-tab="hex" role="tab">HEX</button><button data-tab="base64" role="tab">Base64</button></div><div id="value-note" class="value-note" hidden></div><pre id="value-content" tabindex="0" role="tabpanel" aria-label="值内容"></pre><div class="detail-actions"><button id="copy-value" class="button outline"><svg class="icon"><use href="#i-copy"/></svg>复制内容</button><button id="download-value" class="button quiet"><svg class="icon"><use href="#i-download"/></svg>下载原始值</button></div></div></section>
+    </main>
+  </div>
+  <footer class="statusbar"><span><span class="status-dot"></span><span id="status">连接本地数据库</span></span><span class="footer-hint">Ctrl K 搜索 <span>·</span> Ctrl O 打开</span><span>BoltDB / bbolt</span></footer>
+  <dialog id="open-dialog" aria-labelledby="dialog-title"><form id="path-form"><div class="dialog-heading"><div><span class="eyebrow">LOCAL DATABASE</span><h2 id="dialog-title">打开数据库</h2></div><button type="button" id="close-dialog" class="button icon-button" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button></div><p class="dialog-description">选择 BoltDB / bbolt 文件，以只读方式查看内容。</p><label class="upload-area" id="drop-zone" tabindex="0"><svg class="icon"><use href="#i-upload"/></svg><strong>点击选择，或拖入数据库文件</strong><span id="upload-limit">支持 .db、.bolt 及其他文件扩展名</span><input id="file-input" type="file" hidden></label><div class="or-divider"><span>或者使用本地路径</span></div><label for="path-input" class="input-label">数据库路径</label><input id="path-input" class="path-input" placeholder="E:\data\database.db" autocomplete="off"><p class="input-help">大文件建议使用路径打开；被其他程序占用的文件可选择上传副本。</p><div id="open-error" class="inline-error" role="alert" hidden></div><div class="dialog-footer"><span id="open-progress">原始数据库不会被修改</span><button id="path-submit" class="button primary" type="submit">打开文件</button></div></form></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+/boltdbviewer.exe
+/boltdbviewer
+/node_modules/
+/test-results/
+*.log
+*.db
+*.bolt
+*.bbolt
+*.db-shm
+*.db-wal

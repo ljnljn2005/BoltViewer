@@ -1,0 +1,21 @@
+// Run with: node tools/frontend-test.cjs
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const code = fs.readFileSync(path.join(__dirname, '..', 'web', 'app.js'), 'utf8');
+const start = code.indexOf('function prettyJSON(');
+const end = code.indexOf('function formattedValue(', start);
+const format = vm.runInNewContext(code.slice(start, end) + '\nprettyJSON;');
+const numeric = '{"id":9007199254740993,"huge":123456789012345678901234567890,"exponent":-1.23e+400,"nested":[{},[],true,null]}';
+const output = format(numeric);
+assert.ok(output.includes('9007199254740993'));
+assert.ok(output.includes('123456789012345678901234567890'));
+assert.ok(output.includes('-1.23e+400'));
+assert.deepEqual(JSON.parse(output), JSON.parse(numeric));
+const escaped = String.raw`{"name":"数据库","quote":"a\"b","slashes":"\\","braces":"[{},:]","whitespace":"a b\n\t"}`;
+assert.deepEqual(JSON.parse(format(escaped)), JSON.parse(escaped));
+assert.equal(format('{ "items" : [ ], "meta" : { } }'), '{\n  "items": [],\n  "meta": {}\n}');
+assert.equal(format('  "a b"  '), '"a b"');
+assert.equal(format('42'), '42');
+console.log('JSON formatting: precision, escaped strings, Unicode and empty containers passed.');
